@@ -1,4 +1,4 @@
-module github.com/moeghifar/goorita
+module github.com/moeghifar/halaproxy
 
 go 1.19
 
