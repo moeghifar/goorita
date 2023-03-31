@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	fmt.Println("+++ Go Multiclientproxy +++")
+	fmt.Println("+++ Halaproxy starting +++")
 
 	clients := []*http.Client{}
 
@@ -29,8 +29,9 @@ func main() {
 	ports := []int{33001, 33002}
 	found := 0
 
+	fmt.Println("reading device nic")
 	for _, nic := range nics {
-		// fmt.Printf("%+v\n", nic)
+		fmt.Printf("%+v\n", nic)
 
 		if strings.HasPrefix(nic.Name, "enx") {
 			clients = append(clients, &http.Client{
