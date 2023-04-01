@@ -1,0 +1,21 @@
+flag structures 
+
+# default proxy with port config [done]
+--http-port [port]
+
+# multi bind to nic (NIX only)
+--bind-nic [nic-name:port]
+--bind-nic [nic-name:port]
+
+# multi bind to id 
+--bind-ip [ip:port]
+--bind-ip [ip:port]
+
+# dynamic nic bind with prefix [done]
+--dinamic-bind-nic [prefix-pattern:start-port]
+
+example 
+`--dynamic-bind-nic enx:33001`
+
+will serve multiples proxy start from port 33001
+with nic pattern using prefix enx* 
