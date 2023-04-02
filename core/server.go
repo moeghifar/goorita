@@ -1,6 +1,9 @@
 package core
 
 import (
+	"fmt"
+	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -26,10 +29,64 @@ func SetServer(customTransport *http.Transport) *http.ServeMux {
 	return server
 }
 
+type TunnelConfig struct {
+	CustomTransport *http.Transport
+}
+
+func (t *TunnelConfig) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	if req.Method == http.MethodConnect {
+		proxyConnect(w, req)
+	} else {
+		ct := &transport{
+			customTransport: t.CustomTransport,
+		}
+
+		ct.proxyHandler(w, req)
+	}
+}
+
+func proxyConnect(w http.ResponseWriter, req *http.Request) {
+	log.Printf("CONNECT requested to %v (from %v)", req.Host, req.RemoteAddr)
+	targetConn, err := net.Dial("tcp", req.Host)
+	if err != nil {
+		log.Println("failed to dial to target", req.Host)
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	hj, ok := w.(http.Hijacker)
+	if !ok {
+		log.Fatal("http server doesn't support hijacking connection")
+	}
+
+	clientConn, _, err := hj.Hijack()
+	if err != nil {
+		log.Fatal("http hijacking failed")
+	}
+
+	log.Println("tunnel established")
+	go tunnelConn(targetConn, clientConn)
+	go tunnelConn(clientConn, targetConn)
+}
+
+func tunnelConn(dst io.WriteCloser, src io.ReadCloser) {
+	io.Copy(dst, src)
+	dst.Close()
+	src.Close()
+}
+
 func (t *transport) proxyHandler(w http.ResponseWriter, req *http.Request) {
+	fmt.Println("=== req ===")
+	fmt.Println(req)
+	fmt.Println("===========")
+
 	director := func(target *http.Request) {
 		target.URL = req.URL
 		target.Host = req.Host
+		fmt.Println("=== target ===")
+		fmt.Println(target)
+		fmt.Println("===========")
 	}
 
 	proxy := &httputil.ReverseProxy{

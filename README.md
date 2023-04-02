@@ -32,6 +32,7 @@ Currently this proxy is in development version, we are going to release beta aft
 - [ ] File based configuration
 - [ ] Independent binary
 - [ ] Serve with Fasthttp/Fiber
+- [ ] Better logging and options to enable it
 
 ## Limitation
 - Binding to Network Interface only work in Unix/Linux env since it needs `SO_BINDTODEVICE` 

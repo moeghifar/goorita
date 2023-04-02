@@ -34,7 +34,15 @@ func main() {
 		}
 	}
 
-	listenAndServe(config.HttpPort, core.SetServer(core.CreateTransport(nil)))
+	tunnelProxy := &core.TunnelConfig{
+		CustomTransport: core.CreateTransport(nil),
+	}
+
+	if err := http.ListenAndServe(intToPort(config.HttpPort), tunnelProxy); err != nil {
+		panic(err)
+	}
+
+	// listenAndServe(config.HttpPort, core.SetServer(core.CreateTransport(nil)))
 }
 
 func listenAndServe(port int, srv http.Handler) {
