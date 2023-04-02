@@ -31,6 +31,7 @@ Currently this proxy is in development version, we are going to release beta aft
 - [x] Run with flag configuration
 - [ ] File based configuration
 - [ ] Independent binary
+- [ ] Serve with Fasthttp/Fiber
 
 ## Limitation
 - Binding to Network Interface only work in Unix/Linux env since it needs `SO_BINDTODEVICE` 

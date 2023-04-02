@@ -40,38 +40,6 @@ func (t *transport) proxyHandler(w http.ResponseWriter, req *http.Request) {
 	proxy.ServeHTTP(w, req)
 }
 
-// func newTransportWithNic(nic net.Interface) *http.Transport {
-// 	return &http.Transport{
-// 		DialContext: (&net.Dialer{
-// 			Control: func(network, address string, conn syscall.RawConn) error {
-// 				var operr error
-// 				if err := conn.Control(func(fd uintptr) {
-// 					operr = unix.BindToDevice(int(fd), nic.Name)
-// 				}); err != nil {
-// 					return err
-// 				}
-// 				return operr
-// 			},
-// 		}).DialContext,
-// 		MaxIdleConns:          100,
-// 		IdleConnTimeout:       90 * time.Second,
-// 		TLSHandshakeTimeout:   10 * time.Second,
-// 		ExpectContinueTimeout: 1 * time.Second,
-// 	}
-// }
-
-func NewDialControlWithBindNic(nic net.Interface) func(network, address string, conn syscall.RawConn) error {
-	return func(network, address string, conn syscall.RawConn) error {
-		var operr error
-		if err := conn.Control(func(fd uintptr) {
-			operr = unix.BindToDevice(int(fd), nic.Name)
-		}); err != nil {
-			return err
-		}
-		return operr
-	}
-}
-
 func NewNetDialerWithNicBinding(nic net.Interface) *net.Dialer {
 	return &net.Dialer{
 		Control: func(network, address string, conn syscall.RawConn) error {
@@ -86,17 +54,17 @@ func NewNetDialerWithNicBinding(nic net.Interface) *net.Dialer {
 	}
 }
 
-type TransportOptions struct {
+type transportOptions struct {
 	CustomNetDialer *net.Dialer
 }
 
 func CreateTransportWithNic(nic net.Interface) *http.Transport {
-	return CreateTransport(&TransportOptions{
+	return CreateTransport(&transportOptions{
 		CustomNetDialer: NewNetDialerWithNicBinding(nic),
 	})
 }
 
-func CreateTransport(to *TransportOptions) *http.Transport {
+func CreateTransport(to *transportOptions) *http.Transport {
 	transporter := &http.Transport{
 		MaxIdleConns:          100,
 		IdleConnTimeout:       90 * time.Second,

@@ -7,34 +7,30 @@ import (
 	"strings"
 
 	"github.com/moeghifar/halaproxy/core"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 func main() {
-	fmt.Println("+++ halaproxy +++")
+	zerolog.NewConsoleWriter()
+
+	log.Info().Msg("+++ halaproxy +++")
+
 	config := core.Readflag()
 
 	if config.DynamicBindNic.Enabled {
-		transportsWithNic := []*http.Transport{}
+		startingPort := config.DynamicBindNic.StartPort
 		nics, err := net.Interfaces()
 		if err != nil {
 			panic(err)
 		}
 
-		// get custom nic
 		for _, nic := range nics {
 			if strings.HasPrefix(nic.Name, config.DynamicBindNic.Prefix) {
-				transportsWithNic = append(
-					transportsWithNic,
-					core.CreateTransportWithNic(nic),
-				)
+				fmt.Println("found nic", nic.Name, "bind to port", startingPort)
+				go listenAndServe(startingPort, core.SetServer(core.CreateTransportWithNic(nic)))
+				startingPort++
 			}
-		}
-
-		startingPort := config.DynamicBindNic.StartPort
-
-		for _, nicTransport := range transportsWithNic {
-			go listenAndServe(startingPort, core.SetServer(nicTransport))
-			startingPort++
 		}
 	}
 
