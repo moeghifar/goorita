@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/moeghifar/halaproxy/core"
+	"github.com/moeghifar/meng/core"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
@@ -14,7 +14,7 @@ import (
 func main() {
 	zerolog.NewConsoleWriter()
 
-	log.Info().Msg("+++ halaproxy +++")
+	log.Info().Msg("+++ meng +++")
 
 	config := core.Readflag()
 

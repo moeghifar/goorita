@@ -1,5 +1,9 @@
-# Halaproxy
-Simple & Minimalist http proxy written in Go
+# Meng
+Multi Eggress NetworkinG.
+
+A minimalist forward proxy written in Go.
+
+Designated for multi eggress/outgoing network routing  
 
 ## Run
 default run with default http port (33000)
@@ -26,13 +30,14 @@ Currently this proxy is in development version, we are going to release beta aft
 ## Features
 - [x] Multi outgoing IP address
 - [x] Multi port entry point
-- [ ] HTTPS access
+- [x] Access to HTTPS (with CONNECT method)
+- [x] Flag based configuration
 - [ ] Cached proxy
-- [x] Run with flag configuration
 - [ ] File based configuration
 - [ ] Independent binary
 - [ ] Serve with Fasthttp/Fiber
 - [ ] Better logging and options to enable it
+- [ ] SOCKS5 and HTTPS entry support
 
 ## Limitation
 - Binding to Network Interface only work in Unix/Linux env since it needs `SO_BINDTODEVICE` 
