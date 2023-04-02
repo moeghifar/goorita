@@ -34,20 +34,19 @@ type TunnelConfig struct {
 }
 
 func (t *TunnelConfig) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	ct := &transport{
+		customTransport: t.CustomTransport,
+	}
 	if req.Method == http.MethodConnect {
-		proxyConnect(w, req)
+		ct.proxyConnect(w, req)
 	} else {
-		ct := &transport{
-			customTransport: t.CustomTransport,
-		}
-
 		ct.proxyHandler(w, req)
 	}
 }
 
-func proxyConnect(w http.ResponseWriter, req *http.Request) {
+func (t *transport) proxyConnect(w http.ResponseWriter, req *http.Request) {
 	log.Printf("CONNECT requested to %v (from %v)", req.Host, req.RemoteAddr)
-	targetConn, err := net.Dial("tcp", req.Host)
+	targetConn, err := t.customTransport.DialContext(req.Context(), "tcp", req.Host)
 	if err != nil {
 		log.Println("failed to dial to target", req.Host)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
