@@ -1,5 +1,5 @@
 # Meng
-**M**ulti **E**ggress **N**etwork in **G**o.
+**M**ulti **E**ggress **N**etwork Proxy in **G**o.
 
 A minimalist forward proxy written in Go.
 

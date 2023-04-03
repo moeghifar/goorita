@@ -1,15 +1,14 @@
 package core
 
 import (
-	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"syscall"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"golang.org/x/sys/unix"
 )
 
@@ -17,16 +16,10 @@ type transport struct {
 	customTransport *http.Transport
 }
 
-func SetServer(customTransport *http.Transport) *http.ServeMux {
-	server := http.NewServeMux()
-
-	ct := &transport{
-		customTransport: customTransport,
+func SetServer(customTransport *http.Transport) *TunnelConfig {
+	return &TunnelConfig{
+		CustomTransport: customTransport,
 	}
-
-	server.HandleFunc("/", ct.proxyHandler)
-
-	return server
 }
 
 type TunnelConfig struct {
@@ -45,10 +38,9 @@ func (t *TunnelConfig) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (t *transport) proxyConnect(w http.ResponseWriter, req *http.Request) {
-	log.Printf("CONNECT requested to %v (from %v)", req.Host, req.RemoteAddr)
 	targetConn, err := t.customTransport.DialContext(req.Context(), "tcp", req.Host)
 	if err != nil {
-		log.Println("failed to dial to target", req.Host)
+		log.Warn().Msgf("failed on DialContext to %v", req.Host)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -56,15 +48,16 @@ func (t *transport) proxyConnect(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	hj, ok := w.(http.Hijacker)
 	if !ok {
-		log.Fatal("http server doesn't support hijacking connection")
+		panic("http server doesn't support hijacking connection")
 	}
 
 	clientConn, _, err := hj.Hijack()
 	if err != nil {
-		log.Fatal("http hijacking failed")
+		panic("http hijacking failed")
 	}
 
-	log.Println("tunnel established")
+	log.Info().Msgf("tunnel established with CONNECT request to %v from %v", req.Host, req.RemoteAddr)
+
 	go tunnelConn(targetConn, clientConn)
 	go tunnelConn(clientConn, targetConn)
 }
@@ -76,16 +69,9 @@ func tunnelConn(dst io.WriteCloser, src io.ReadCloser) {
 }
 
 func (t *transport) proxyHandler(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("=== req ===")
-	fmt.Println(req)
-	fmt.Println("===========")
-
 	director := func(target *http.Request) {
 		target.URL = req.URL
 		target.Host = req.Host
-		fmt.Println("=== target ===")
-		fmt.Println(target)
-		fmt.Println("===========")
 	}
 
 	proxy := &httputil.ReverseProxy{
@@ -126,10 +112,12 @@ func CreateTransport(to *transportOptions) *http.Transport {
 		IdleConnTimeout:       90 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+		DialContext:           (&net.Dialer{}).DialContext, // this is a must to define default net.Dialer.dialContext
 	}
 
 	if to != nil {
 		if to.CustomNetDialer != nil {
+			// overwrite DialContext on behalf custom nic binding
 			transporter.DialContext = (to.CustomNetDialer).DialContext
 		}
 	}

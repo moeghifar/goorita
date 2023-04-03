@@ -27,27 +27,21 @@ func main() {
 
 		for _, nic := range nics {
 			if strings.HasPrefix(nic.Name, config.DynamicBindNic.Prefix) {
-				fmt.Println("found nic", nic.Name, "bind to port", startingPort)
+				log.Info().Msgf("found nic %s bind to port %d", nic.Name, startingPort)
 				go listenAndServe(startingPort, core.SetServer(core.CreateTransportWithNic(nic)))
 				startingPort++
 			}
 		}
 	}
 
-	tunnelProxy := &core.TunnelConfig{
-		CustomTransport: core.CreateTransport(nil),
-	}
-
-	if err := http.ListenAndServe(intToPort(config.HttpPort), tunnelProxy); err != nil {
+	if err := listenAndServe(config.HttpPort, core.SetServer(core.CreateTransport(nil))); err != nil {
 		panic(err)
 	}
-
-	// listenAndServe(config.HttpPort, core.SetServer(core.CreateTransport(nil)))
 }
 
-func listenAndServe(port int, srv http.Handler) {
-	fmt.Println("serving in port", port)
-	http.ListenAndServe(intToPort(port), srv)
+func listenAndServe(port int, srv http.Handler) error {
+	log.Info().Msgf("serving in port %d", port)
+	return http.ListenAndServe(intToPort(port), srv)
 }
 
 func intToPort(port int) string {
