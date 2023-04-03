@@ -30,6 +30,7 @@ func (t *TunnelConfig) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ct := &transport{
 		customTransport: t.CustomTransport,
 	}
+
 	if req.Method == http.MethodConnect {
 		ct.proxyConnect(w, req)
 	} else {
@@ -40,7 +41,7 @@ func (t *TunnelConfig) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 func (t *transport) proxyConnect(w http.ResponseWriter, req *http.Request) {
 	targetConn, err := t.customTransport.DialContext(req.Context(), "tcp", req.Host)
 	if err != nil {
-		log.Warn().Msgf("failed on DialContext to %v", req.Host)
+		log.Error().Msgf("failed on DialContext to %v", req.Host)
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -48,24 +49,23 @@ func (t *transport) proxyConnect(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	hj, ok := w.(http.Hijacker)
 	if !ok {
-		panic("http server doesn't support hijacking connection")
+		log.Panic().Msg("http server doesn't support hijacking connection")
 	}
 
 	clientConn, _, err := hj.Hijack()
 	if err != nil {
-		panic("http hijacking failed")
+		log.Panic().Msg("http hijacking failed")
 	}
 
+	go connectTunnel(targetConn, clientConn)
+	go connectTunnel(clientConn, targetConn)
 	log.Info().Msgf("tunnel established with CONNECT request to %v from %v", req.Host, req.RemoteAddr)
-
-	go tunnelConn(targetConn, clientConn)
-	go tunnelConn(clientConn, targetConn)
 }
 
-func tunnelConn(dst io.WriteCloser, src io.ReadCloser) {
-	io.Copy(dst, src)
-	dst.Close()
-	src.Close()
+func connectTunnel(destination io.WriteCloser, source io.ReadCloser) {
+	defer destination.Close()
+	defer source.Close()
+	io.Copy(destination, source)
 }
 
 func (t *transport) proxyHandler(w http.ResponseWriter, req *http.Request) {

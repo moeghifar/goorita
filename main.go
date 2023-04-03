@@ -22,26 +22,30 @@ func main() {
 		startingPort := config.DynamicBindNic.StartPort
 		nics, err := net.Interfaces()
 		if err != nil {
-			panic(err)
+			log.Panic().Err(err)
 		}
 
 		for _, nic := range nics {
 			if strings.HasPrefix(nic.Name, config.DynamicBindNic.Prefix) {
 				log.Info().Msgf("found nic %s bind to port %d", nic.Name, startingPort)
-				go listenAndServe(startingPort, core.SetServer(core.CreateTransportWithNic(nic)))
+				go func() {
+					if err := listenAndServe(startingPort, core.SetServer(core.CreateTransportWithNic(nic))); err != nil {
+						log.Panic().Err(err)
+					}
+				}()
 				startingPort++
 			}
 		}
 	}
 
 	if err := listenAndServe(config.HttpPort, core.SetServer(core.CreateTransport(nil))); err != nil {
-		panic(err)
+		log.Fatal().Err(err)
 	}
 }
 
-func listenAndServe(port int, srv http.Handler) error {
+func listenAndServe(port int, handler http.Handler) error {
 	log.Info().Msgf("serving in port %d", port)
-	return http.ListenAndServe(intToPort(port), srv)
+	return http.ListenAndServe(intToPort(port), handler)
 }
 
 func intToPort(port int) string {

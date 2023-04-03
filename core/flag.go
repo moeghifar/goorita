@@ -2,9 +2,10 @@ package core
 
 import (
 	"flag"
-	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/rs/zerolog/log"
 )
 
 type config struct {
@@ -53,14 +54,14 @@ func parseDynamicBindNic(input string) DynamicBindNic {
 	split := strings.Split(input, ":")
 
 	if len(split) < 2 {
-		panic("invalid format --dynamic-bind-port example [enx:330001]")
+		log.Fatal().Msg("invalid format --dynamic-bind-port example [enx:330001]")
 	}
 
 	startPort := defaultDynamicBindNicStartPort
 
 	valid, err := strconv.Atoi(split[1])
 	if err != nil {
-		panic(fmt.Sprintf("%+v: invalid format --dynamic-bind-port example [enx:330001]", err))
+		log.Fatal().Msgf("%+v: invalid format --dynamic-bind-port example [enx:330001]", err)
 	}
 
 	if valid > 0 {

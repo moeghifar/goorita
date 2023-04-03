@@ -32,11 +32,12 @@ Currently this proxy is in development version, we are going to release beta aft
 - [x] Multi port entry point
 - [x] Access to HTTPS (with CONNECT method)
 - [x] Flag based configuration
+- [x] Better logging format
 - [ ] Cached proxy
 - [ ] File based configuration
 - [ ] Independent binary
 - [ ] Serve with Fasthttp/Fiber
-- [ ] Better logging and options to enable it
+- [ ] Debug log options from config 
 - [ ] SOCKS5 and HTTPS entry support
 
 ## Limitation
