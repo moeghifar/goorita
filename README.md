@@ -43,5 +43,11 @@ Currently this proxy is in development version, we are going to release beta aft
 ## Limitation
 - Binding to Network Interface only work in Unix/Linux env since it needs `SO_BINDTODEVICE` 
 
+## References
+- https://www.sobyte.net/post/2021-09/https-proxy-in-golang-in-less-than-100-lines-of-code/
+- https://eli.thegreenplace.net/2022/go-and-proxy-servers-part-2-https-proxies/
+- https://stackoverflow.com/a/27411300
+- https://pkg.go.dev/syscall#BindToDevice
+
 ## License
 Apache License Version 2.0
